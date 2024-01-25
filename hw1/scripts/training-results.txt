@@ -1,0 +1,66 @@
+MNIST data:
+
+MNIST Training Features: (50000, 784)
+MNIST Training Labels: (50000,)
+MNIST Validation Features: (10000, 784)
+MNIST Validation Labels: (10000,)
+
+Training with 100 examples
+Training accuracy: 1.0
+Validation Accuracy: 0.79
+
+Training with 200 examples
+Training accuracy: 1.0
+Validation Accuracy: 0.805
+
+Training with 500 examples
+Training accuracy: 1.0
+Validation Accuracy: 0.88
+
+Training with 1000 examples
+Training accuracy: 1.0
+Validation Accuracy: 0.875
+
+Training with 2000 examples
+Training accuracy: 1.0
+Validation Accuracy: 0.898
+
+Training with 5000 examples
+Training accuracy: 1.0
+Validation Accuracy: 0.9096
+
+Training with 10000 examples
+Training accuracy: 1.0
+Validation Accuracy: 0.9104
+
+-----------------------------------------------------
+Spam data:
+
+Spam Training Features: (3337, 32)
+Spam Training Labels: (3337,)
+Spam Validation Features: (834, 32)
+Spam Validation Labels: (834,)
+
+Training with 100 examples
+Training accuracy: 0.92
+Validation Accuracy: 0.72
+
+Training with 200 examples
+Training accuracy: 0.88
+Validation Accuracy: 0.72
+
+Training with 500 examples
+Training accuracy: 0.836
+Validation Accuracy: 0.782
+
+Training with 1000 examples
+Training accuracy: 0.83
+Validation Accuracy: 0.8081534772182254
+
+Training with 2000 examples
+Training accuracy: 0.833
+Validation Accuracy: 0.8189448441247003
+
+Training with 4171 examples
+Training accuracy: 0.8243931675157327
+Validation Accuracy: 0.8165467625899281

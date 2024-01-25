@@ -1,0 +1,57 @@
+Training with 1e-10 C-value
+Training accuracy: 0.11088
+Validation Accuracy: 0.1198
+
+Training with 1e-09 C-value
+Training accuracy: 0.6982
+Validation Accuracy: 0.6934
+
+Training with 1e-08 C-value
+Training accuracy: 0.89294
+Validation Accuracy: 0.8837
+
+Training with 1e-07 C-value
+Training accuracy: 0.92656
+Validation Accuracy: 0.9175
+
+Training with 1e-06 C-value
+Training accuracy: 0.93742
+Validation Accuracy: 0.9241
+
+Training with 1e-05 C-value
+Training accuracy: 0.93182
+Validation Accuracy: 0.9159
+
+Training with 0.0001 C-value
+Training accuracy: 0.92716
+Validation Accuracy: 0.9079
+
+Training with 0.001 C-value
+Training accuracy: 0.92716
+Validation Accuracy: 0.9079
+
+Training with 0.01 C-value
+Training accuracy: 0.92716
+Validation Accuracy: 0.9079
+
+Training with 0.1 C-value
+Training accuracy: 0.92716
+Validation Accuracy: 0.9079
+
+Training with 1 C-value
+Training accuracy: 0.92716
+Validation Accuracy: 0.9079
+
+Training with 10 C-value
+Training accuracy: 0.92716
+Validation Accuracy: 0.9079
+
+Training with 100 C-value
+Training accuracy: 0.92716
+Validation Accuracy: 0.9079
+
+Training with 1000 C-value
+Training accuracy: 0.92716
+Validation Accuracy: 0.9079
+
+Best C value: 1e-06, Best Validation Accuracy: 0.93076

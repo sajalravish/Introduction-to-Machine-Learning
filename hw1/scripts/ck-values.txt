@@ -1,0 +1,13 @@
+C = 1e-10, Cross-Validation Accuracy = 0.7099174963416495
+C = 1e-09, Cross-Validation Accuracy = 0.7099174963416495
+C = 1e-08, Cross-Validation Accuracy = 0.7099174963416495
+C = 1e-07, Cross-Validation Accuracy = 0.7099174963416495
+C = 1e-06, Cross-Validation Accuracy = 0.7099174963416495
+C = 1e-05, Cross-Validation Accuracy = 0.7099174963416495
+C = 0.0001, Cross-Validation Accuracy = 0.7156101589923601
+C = 0.001, Cross-Validation Accuracy = 0.7455772113943029
+C = 0.01, Cross-Validation Accuracy = 0.7725520473296286
+C = 0.1, Cross-Validation Accuracy = 0.7911301834112884
+C = 1, Cross-Validation Accuracy = 0.7992211977843413
+C = 10, Cross-Validation Accuracy = 0.8022188007792511
+C = 100, Cross-Validation Accuracy = 0.8028180520518184
