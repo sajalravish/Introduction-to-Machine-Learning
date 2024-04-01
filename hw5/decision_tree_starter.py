@@ -207,7 +207,7 @@ def preprocess(data, fill_mode=True, min_freq=10, onehot_cols=[]):
     # features such as gender or cabin type, which are not ordered.
     if fill_mode:
         for i in range(data.shape[1]):    # iterate through each feature
-            if -1 in data[:, i]:          # are any feature values missing?
+            if np.all(data[:, i] == -1):          # are any feature values missing?
                 mode_value = Counter(data[:, i]).most_common(1)[0][0]
                 data[:, i][data[:, i] == -1] = mode_value
 
@@ -272,16 +272,17 @@ def accuracy_eval(true_labels, predicted_labels):
 
 # A code snippet to help you save your results into a kaggle accepted csv
 # Usage: results_to_csv(clf.predict(X_test))
-def results_to_csv(y_test):
+# filename [STRING] = 'filename.csv'
+def results_to_csv(y_test, filename):
     y_test = y_test.astype(int)
     df = pd.DataFrame({'Category': y_test})
     df.index += 1 # Ensures that the index starts at 1
-    df.to_csv('submission.csv', index_label='Id')
+    df.to_csv(filename, index_label='Id')
 
 
 if __name__ == "__main__":
-    dataset = "titanic"
-    # dataset = "spam"
+    #dataset = "titanic"
+    dataset = "spam"
     params = {
         "max_depth": 5,
         # "random_state": 6,
@@ -355,23 +356,26 @@ if __name__ == "__main__":
 
     # Run decision tree
     X_train, y_train, X_val, y_val = partition(X, y, 0.2)
-    decisiontree_clf_spam = DecisionTree(max_depth=params["max_depth"])
-    decisiontree_clf_spam.fit(X_train, y_train)
+    decisiontree_clf = DecisionTree(max_depth=params["max_depth"])
+    decisiontree_clf.fit(X_train, y_train)
 
-    y_pred_train_spam = decisiontree_clf_spam.predict(X_train)
-    y_pred_val_spam = decisiontree_clf_spam.predict(X_val)
-    training_accuracy_spam_decisiontree = accuracy_eval(y_train, y_pred_train_spam)
-    validation_accuracy_spam_decisiontree = accuracy_eval(y_val, y_pred_val_spam)
-    print("SPAM decision tree training accuracy:", training_accuracy_spam_decisiontree)
-    print("SPAM decision tree validation accuracy:", validation_accuracy_spam_decisiontree)
+    y_pred_train = decisiontree_clf.predict(X_train)
+    y_pred_val = decisiontree_clf.predict(X_val)
+    training_accuracy_decisiontree = accuracy_eval(y_train, y_pred_train)
+    validation_accuracy_decisiontree = accuracy_eval(y_val, y_pred_val)
+    print(dataset, " decision tree training accuracy:", training_accuracy_decisiontree)
+    print(dataset, " decision tree validation accuracy:", validation_accuracy_decisiontree)
 
     # Run random forest
-    randomforect_clf_spam = RandomForest()
-    randomforect_clf_spam.fit(X_train, y_train)
+    randomforect_clf = RandomForest()
+    randomforect_clf.fit(X_train, y_train)
 
-    y_pred_train_spam = randomforect_clf_spam.predict(X_train)
-    y_pred_val_spam = randomforect_clf_spam.predict(X_val)
-    training_accuracy_spam_randomforest = accuracy_eval(y_train, y_pred_train_spam)
-    validation_accuracy_spam_randomforest = accuracy_eval(y_val, y_pred_val_spam)
-    print("SPAM random forest training accuracy:", training_accuracy_spam_randomforest)
-    print("SPAM random forest validation accuracy:", validation_accuracy_spam_randomforest)
+    y_pred_train = randomforect_clf.predict(X_train)
+    y_pred_val = randomforect_clf.predict(X_val)
+    training_accuracy_randomforest = accuracy_eval(y_train, y_pred_train)
+    validation_accuracy_randomforest = accuracy_eval(y_val, y_pred_val)
+    print(dataset, " random forest training accuracy:", training_accuracy_randomforest)
+    print(dataset, " random forest validation accuracy:", validation_accuracy_randomforest)
+
+    results_to_csv(decisiontree_clf.predict(Z), dataset + '_decisiontree_clf.csv')
+    results_to_csv(randomforect_clf.predict(Z), dataset + '_randomforect_clf.csv')
