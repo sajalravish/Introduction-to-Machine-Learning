@@ -1,1 +1,1 @@
-Eaching hw folder is a separate project / homework assignment.
+Each hw folder is a separate project / homework assignment.
