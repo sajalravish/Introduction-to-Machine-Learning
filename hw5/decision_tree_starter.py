@@ -289,8 +289,8 @@ def results_to_csv(y_test, filename):
 
 
 if __name__ == "__main__":
-    dataset = "titanic"
-    #dataset = "spam"
+    #dataset = "titanic"
+    dataset = "spam"
     params = {
         "max_depth": 10,
         # "random_state": 6,
@@ -389,36 +389,38 @@ if __name__ == "__main__":
     results_to_csv(randomforect_clf.predict(Z), dataset + '_randomforect_clf.csv')
 
     # Train spam decision tree with varying maximum depths with all other hyperparameters fixed
-    depths = range(1, 41)
-    validation_accuracies = []
-    for depth in depths:
-        clf = DecisionTreeClassifier(max_depth=depth, random_state=0)
-        clf.fit(X_train, y_train)
-        y_pred_val = clf.predict(X_val)
-        val_accuracy = accuracy_eval(y_val, y_pred_val)
-        validation_accuracies.append(val_accuracy)
+    if dataset == "spam":
+        depths = range(1, 41)
+        validation_accuracies = []
+        for depth in depths:
+            clf = DecisionTreeClassifier(max_depth=depth, random_state=0)
+            clf.fit(X_train, y_train)
+            y_pred_val = clf.predict(X_val)
+            val_accuracy = accuracy_eval(y_val, y_pred_val)
+            validation_accuracies.append(val_accuracy)
 
-    # Plot
-    plt.figure(figsize=(10, 10))
-    plt.plot(depths, validation_accuracies)
-    plt.title('Validation Accuracies vs. Maximum Depth')
-    plt.xlabel('Maximum Depth')
-    plt.ylabel('Validation Accuracy')
-    plt.xticks(depths)
-    plt.grid(True)
-    plt.show()
+        # Plot
+        plt.figure(figsize=(10, 10))
+        plt.plot(depths, validation_accuracies)
+        plt.title('Validation Accuracies vs. Maximum Depth')
+        plt.xlabel('Maximum Depth')
+        plt.ylabel('Validation Accuracy')
+        plt.xticks(depths)
+        plt.grid(True)
+        plt.show()
 
-    best_depth = depths[np.argmax(validation_accuracies)] # the depth with highest validation accuracy
-    print(f"Depth with the highest validation accuracy: {best_depth}")
+        best_depth = depths[np.argmax(validation_accuracies)] # the depth with highest validation accuracy
+        print(f"Depth with the highest validation accuracy: {best_depth}")
 
     # Titanic shallow tree visualization
-    clf = DecisionTreeClassifier(max_depth=3, random_state=0)
-    clf.fit(X_train, y_train)
+    if dataset == "titanic":
+        clf = DecisionTreeClassifier(max_depth=3, random_state=0)
+        clf.fit(X_train, y_train)
 
-    graph = graph_from_dot_data(export_graphviz(clf))
-    graph[0].write_pdf("shallow_titanic.pdf")
+        graph = graph_from_dot_data(export_graphviz(clf))
+        graph[0].write_pdf("shallow_titanic.pdf")
 
-    plt.figure(figsize=(12, 8))
-    plot_tree(clf, feature_names=features, class_names=class_names, filled=True)
-    plt.title("Decision Tree Visualization (Depth 3)")
-    plt.show()
+        plt.figure(figsize=(12, 8))
+        plot_tree(clf, feature_names=features, class_names=class_names, filled=True)
+        plt.title("Decision Tree Visualization (Depth 3)")
+        plt.show()
