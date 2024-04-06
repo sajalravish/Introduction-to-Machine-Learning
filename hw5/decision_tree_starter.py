@@ -7,12 +7,13 @@ from collections import Counter
 import numpy as np
 from numpy import genfromtxt
 import scipy.io
-from sklearn.tree import DecisionTreeClassifier, export_graphviz
+from sklearn.tree import DecisionTreeClassifier, export_graphviz, plot_tree
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.model_selection import cross_val_score
 from pydot import graph_from_dot_data
 import io
 import pandas as pd
+from matplotlib import pyplot as plt
 
 import random
 random.seed(246810)
@@ -22,7 +23,7 @@ eps = 1e-5  #small number
 
 class DecisionTree:
 
-    def __init__(self, max_depth=3, feature_labels=None):
+    def __init__(self, max_depth=39, feature_labels=None):
         self.max_depth = max_depth
         self.features = feature_labels
         self.left, self.right = None, None  # for non-leaf nodes
@@ -147,19 +148,19 @@ class BaggedTrees(BaseEstimator, ClassifierMixin):
     def fit(self, X, y):
         # fit n decision trees to a random subsample of the data
         for tree in self.decision_trees:
-            bagging_indices = np.random.choice(range(X.shape[0]), size=X.shape[0], replace=True)
+            bagging_indices = np.random.RandomState(246810).choice(range(X.shape[0]), size=X.shape[0], replace=True)
             tree.fit(X[bagging_indices], y[bagging_indices])
 
     def predict(self, X):
         predictions = []
         for tree in self.decision_trees:
             predictions.append(tree.predict(X))
-        return np.mean(predictions, axis=0)
+        return np.array(np.round(np.mean(predictions, axis=0)), dtype='bool')
 
 
 class RandomForest(BaggedTrees):
 
-    def __init__(self, params=None, n=200, m=1):
+    def __init__(self, params=None, n=200, m=5):
         if params is None:
             params = {}
         params['max_features'] = m
@@ -206,9 +207,16 @@ def preprocess(data, fill_mode=True, min_freq=10, onehot_cols=[]):
     # the mean or median because this makes more sense for categorical
     # features such as gender or cabin type, which are not ordered.
     if fill_mode:
-        for i in range(data.shape[1]):    # iterate through each feature
-            if np.all(data[:, i] == -1):          # are any feature values missing?
-                mode_value = Counter(data[:, i]).most_common(1)[0][0]
+        for i in range(data.shape[1]):
+            # For categorical data
+            if isinstance(data[:, i][0], bytes):
+                # get the most common value which isn't -1 (or 'missing')
+                mode_value = Counter(data[:, i][data[:, i] != b'-1']).most_common(1)[0][0] 
+                data[:, i][data[:, i] == b'-1'] = mode_value
+
+            # For numerical data
+            else:
+                mode_value = Counter(data[:, i][data[:, i] != -1]).most_common(1)[0][0]
                 data[:, i][data[:, i] == -1] = mode_value
 
     return data, onehot_features
@@ -281,10 +289,10 @@ def results_to_csv(y_test, filename):
 
 
 if __name__ == "__main__":
-    #dataset = "titanic"
-    dataset = "spam"
+    dataset = "titanic"
+    #dataset = "spam"
     params = {
-        "max_depth": 5,
+        "max_depth": 10,
         # "random_state": 6,
         "min_samples_leaf": 10,
     }
@@ -352,22 +360,22 @@ if __name__ == "__main__":
     # debug data preprocessing step
     import sys
     np.set_printoptions(threshold=sys.maxsize)
-    print(X[0])
+    print("\n", "Check that data doesn't contain missing values or -1:", X[0])
 
     # Run decision tree
     X_train, y_train, X_val, y_val = partition(X, y, 0.2)
-    decisiontree_clf = DecisionTree(max_depth=params["max_depth"])
+    decisiontree_clf = DecisionTree(max_depth = params["max_depth"])
     decisiontree_clf.fit(X_train, y_train)
 
     y_pred_train = decisiontree_clf.predict(X_train)
     y_pred_val = decisiontree_clf.predict(X_val)
     training_accuracy_decisiontree = accuracy_eval(y_train, y_pred_train)
     validation_accuracy_decisiontree = accuracy_eval(y_val, y_pred_val)
-    print(dataset, " decision tree training accuracy:", training_accuracy_decisiontree)
+    print("\n", dataset, " decision tree training accuracy:", training_accuracy_decisiontree)
     print(dataset, " decision tree validation accuracy:", validation_accuracy_decisiontree)
 
     # Run random forest
-    randomforect_clf = RandomForest()
+    randomforect_clf = RandomForest(params=params, n=500, m=4)
     randomforect_clf.fit(X_train, y_train)
 
     y_pred_train = randomforect_clf.predict(X_train)
@@ -379,3 +387,38 @@ if __name__ == "__main__":
 
     results_to_csv(decisiontree_clf.predict(Z), dataset + '_decisiontree_clf.csv')
     results_to_csv(randomforect_clf.predict(Z), dataset + '_randomforect_clf.csv')
+
+    # Train spam decision tree with varying maximum depths with all other hyperparameters fixed
+    depths = range(1, 41)
+    validation_accuracies = []
+    for depth in depths:
+        clf = DecisionTreeClassifier(max_depth=depth, random_state=0)
+        clf.fit(X_train, y_train)
+        y_pred_val = clf.predict(X_val)
+        val_accuracy = accuracy_eval(y_val, y_pred_val)
+        validation_accuracies.append(val_accuracy)
+
+    # Plot
+    plt.figure(figsize=(10, 10))
+    plt.plot(depths, validation_accuracies)
+    plt.title('Validation Accuracies vs. Maximum Depth')
+    plt.xlabel('Maximum Depth')
+    plt.ylabel('Validation Accuracy')
+    plt.xticks(depths)
+    plt.grid(True)
+    plt.show()
+
+    best_depth = depths[np.argmax(validation_accuracies)] # the depth with highest validation accuracy
+    print(f"Depth with the highest validation accuracy: {best_depth}")
+
+    # Titanic shallow tree visualization
+    clf = DecisionTreeClassifier(max_depth=3, random_state=0)
+    clf.fit(X_train, y_train)
+
+    graph = graph_from_dot_data(export_graphviz(clf))
+    graph[0].write_pdf("shallow_titanic.pdf")
+
+    plt.figure(figsize=(12, 8))
+    plot_tree(clf, feature_names=features, class_names=class_names, filled=True)
+    plt.title("Decision Tree Visualization (Depth 3)")
+    plt.show()
