@@ -285,15 +285,14 @@ class Conv2D(Layer):
         kernel_shape = (kernel_height, kernel_width)
 
         # compute output dimensions
-        i = kernel_shape[0]
-        j = kernel_shape[1]
         s = self.stride
-        out_rows = ((in_rows - i + 2 * self.pad[0]) // s) + 1
-        out_cols = ((in_cols - j + 2 * self.pad[1]) // s) + 1
+        out_rows = (in_rows - kernel_height + 2 * self.pad[0]) // self.stride + 1
+        out_cols = (in_cols - kernel_width + 2 * self.pad[1]) // self.stride + 1
+
 
         # padding
-        X_pad = np.pad(X, ((0, 0), (self.pad[0], self.pad[0]), (self.pad[1], self.pad[1]), (0, 0)), mode='constant')
-        Z = np.zeros((n_examples, out_rows, out_cols, self.n_out))
+        X_padded = np.pad(X, ((0, 0), (self.pad[0], self.pad[0]), (self.pad[1], self.pad[1]), (0, 0)), mode='constant')
+        Z = np.zeros((n_examples, out_rows, out_cols, out_channels))
 
         # implement a convolutional forward pass
         ''' alternative implementation takes too long to run
@@ -306,19 +305,18 @@ class Conv2D(Layer):
                                 out[:, d1, d2, n] += X[:, d1 * self.stride + i, d2 * self.stride + j, c] * W[i, j, c, n] + b[:, n]
         '''
 
-        for d1 in range(out_rows):
-            for d2 in range(out_cols):
-                start_row = d1 * s
-                start_col = d2 * s
-                end_row = start_row + i
-                end_col = start_col + j
-                for channel in range(out_channels):
-                    Z[:, d1, d2, channel] = np.sum(X_pad[:, start_row:end_row, start_col:end_col, :] * W[:, :, :, channel], axis=(1, 2, 3)) + b[:, channel]
+        for i in range(out_rows):
+            for j in range(out_cols):
+                X_slice = X_padded[:, i * self.stride:i * self.stride + kernel_height, j * self.stride:j * self.stride + kernel_width, :]
+                X_slice_reshaped = X_slice.reshape(X_slice.shape[0], -1)  # reshape X_slice
+                W_reshaped = W.reshape(-1, W.shape[-1])  # reshape W
+
+                Z[:, i, j, :] = X_slice_reshaped.dot(W_reshaped) + b
         
         # cache any values required for backprop
-        self.cache["X"] = X
-        self.cache["Z"] = Z
         out = self.activation.forward(Z)
+        self.cache["X"] = (X_padded, X)
+        self.cache["Z"] = Z
                             
         ### END YOUR CODE ###
         return out
@@ -342,13 +340,10 @@ class Conv2D(Layer):
         ### BEGIN YOUR CODE ###
         W = self.parameters["W"]
         Z = self.cache["Z"]
-        X = self.cache["X"]
+        X_pad, X = self.cache["X"]
         kernel_height, kernel_width, in_channels, out_channels = W.shape
         n_examples, in_rows, in_cols, in_channels = X.shape
         kernel_shape = (kernel_height, kernel_width)
-
-        # padding
-        X_pad = np.pad(X, ((0, 0), (self.pad[0], self.pad[0]), (self.pad[1], self.pad[1]), (0, 0)), mode='constant')
 
         # compute output dimensions
         i = kernel_shape[0]
@@ -359,7 +354,7 @@ class Conv2D(Layer):
 
         # compute gradients & perform a backward pass
         dLdZ = self.activation.backward(Z, dLdY)
-        dLdb = np.sum(dLdZ, axis=(0, 1, 2)).reshape(1,-1)
+        dLdb = np.sum(dLdZ, axis=(0, 1, 2))
         dLdW = np.zeros_like(W)
         dLdX = np.zeros_like(X_pad)
 
@@ -371,18 +366,19 @@ class Conv2D(Layer):
                 end_col = start_col + j
 
                 for channel in range(out_channels):
-                    dLdX[:, start_row:end_row, start_col:end_col, :] += W[np.newaxis, :, :, :, channel] * dLdZ[:, d1:d1+1, d2:d2+1, np.newaxis, channel]
-                    dLdW[:, :, :, channel] += np.sum(dLdX[:, start_row:end_row, start_col:end_col, :] * dLdZ[:, d1:d1+1, d2:d2+1, np.newaxis, channel], axis=0)
+                    dLdZ_slice = dLdZ[:, d1:d1+1, d2:d2+1, np.newaxis, channel]
+                    dLdX_slice = dLdX[:, start_row:end_row, start_col:end_col, :]
+                    W_slice = W[np.newaxis, :, :, :, channel] 
+                    dLdX[:, start_row:end_row, start_col:end_col, :] += W_slice * dLdZ_slice
+                    dLdW[:, :, :, channel] += np.sum(dLdX_slice * dLdZ_slice, axis=0)
 
-                    #dLdX[:, start_row:end_row, start_col:end_col, :] += W[:, :, :, channel] * dLdZ[:, d1, d2, channel]
-                    #dLdW[:, :, :, channel] += np.sum(X_pad[:, start_row:end_row, start_col:end_col, :] * dLdZ[:, d1, d2, channel], axis=0)
-        
         self.gradients["W"] = dLdW
         self.gradients["b"] = dLdb
         dLdX = dLdX[:, self.pad[0]:self.pad[0]+in_rows, self.pad[1]:in_cols+self.pad[1], :]
         ### END YOUR CODE ###
 
         return dLdX
+    
 
 class Pool2D(Layer):
     """Pooling layer, implements max and average pooling."""

@@ -18,7 +18,7 @@ conda activate cs189sp24
 
 To run all the tests, please run:
 ```sh
-python -m unittest -v
+python3 -m unittest -v
 ```
 
 Before submitting, please make sure that all the tests pass.

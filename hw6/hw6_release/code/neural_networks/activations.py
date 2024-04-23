@@ -89,7 +89,7 @@ class Sigmoid(Activation):
         f(z) as described above applied elementwise to `Z`
         """
         ### YOUR CODE HERE ###
-        return ...
+        return 1 / (1 + np.exp(-Z))
 
     def backward(self, Z: np.ndarray, dY: np.ndarray) -> np.ndarray:
         """Backward pass for sigmoid.
@@ -105,7 +105,8 @@ class Sigmoid(Activation):
         gradient of loss w.r.t. input of this layer
         """
         ### YOUR CODE HERE ###
-        return ...
+        sig_Z = self.forward(Z)
+        return dY * sig_Z * (1 - sig_Z)
 
 
 class TanH(Activation):
