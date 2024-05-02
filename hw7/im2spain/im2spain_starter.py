@@ -19,6 +19,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import NearestNeighbors
+from PIL import Image
 
 
 def plot_data(train_feats, train_labels):
@@ -38,7 +39,7 @@ def plot_data(train_feats, train_labels):
     plt.show()
 
     # Run PCA on training_feats
-    ##### TODO(a): Your Code Here #####
+    ##### (a): Your Code Here #####
     transformed_feats = StandardScaler().fit_transform(train_feats)
     transformed_feats = PCA(n_components=2).fit_transform(transformed_feats)
 
@@ -87,8 +88,17 @@ def grid_search(train_features, train_labels, test_features, test_labels, is_wei
             # Assume 1 degree latitude is 69 miles and 1 degree longitude is 52 miles
             y = test_labels[i]
 
-            ##### TODO(d): Your Code Here #####
-            ...
+            ##### (d): Your Code Here #####
+            if is_weighted:
+                w = 1 / (distances[i] + 1e-8)
+                predicted_location = np.average(train_labels[nearest], axis=0, weights=w)
+            else:
+                predicted_location = np.mean(train_labels[nearest], axis=0)
+
+            true_location = test_labels[i]
+            delta_lat = (predicted_location[0] - true_location[0]) * 69 
+            delta_long = (predicted_location[1] - true_location[1]) * 52 
+            e = np.sqrt(delta_lat ** 2 + delta_long ** 2)
 
             errors.append(e)
         
@@ -128,31 +138,56 @@ def main():
     # Part A: Feature and label visualization (modify plot_data method)
     plot_data(train_features, train_labels)
 
-    # Part C: Find the 5 nearest neighbors of test image 53633239060.jpg
+    # Part B: Find the 3 nearest neighbors of test image 53633239060.jpg
     knn = NearestNeighbors(n_neighbors=3).fit(train_features)
 
     # Use knn to get the k nearest neighbors of the features of image 53633239060.jpg
-    ##### TODO(c): Your Code Here #####
-    ...
+    ##### (b): Your Code Here #####
+    print("Test Image File:")
+    image_index = np.where(test_files == '53633239060.jpg')[0][0]
+    test_image_file = test_files[image_index]
+    test_image = Image.open(f"./im2spain_images/{test_image_file}") 
+    test_image.show()  
+    print(f"Test Image File: {test_image_file}, Coordinates: {test_labels[image_index]}")
 
-    # Part D: establish a naive baseline of predicting the mean of the training set
-    ##### TODO(d): Your Code Here #####
-    ...
+    distances, indices = knn.kneighbors(test_features[image_index].reshape(1, -1), n_neighbors=3)
+    print("Test Image's Three Nearest Neighbors:")
+    for i, idx in enumerate(indices[0]):
+        image_file = train_files[idx]
+        image = Image.open(f"./im2spain_images/{image_file}")
+        image.show()
+        print(f"{i+1}. Image File: {image_file}, Coordinates: {train_labels[idx]}")
 
-    # Part E: complete grid_search to find the best value of k
+    # Part C: establish a naive baseline of predicting the mean of the training set
+    ##### (c): Your Code Here #####
+    centroid = np.mean(train_labels, axis=0)
+    centroid_latitude, centroid_longitude = centroid
+    delta_latitude = 69 * (centroid_latitude - train_labels[:, 0])  # convert latitude difference to miles
+    delta_longitude = 52 * (centroid_longitude - train_labels[:, 1])  # convert longitude difference to miles
+    mde = np.mean(np.sqrt(delta_latitude ** 2 + delta_longitude ** 2))
+
+    print("Naive Prediction Centroid:", centroid)
+    print("Mean Displacement Error:", mde)
+
+    # Part D: complete grid_search to find the best value of k
     grid_search(train_features, train_labels, test_features, test_labels)
 
-    # Parts G: rerun grid search after modifications to find the best value of k
+    # Parts F: rerun grid search after modifications to find the best value of k
     grid_search(train_features, train_labels, test_features, test_labels, is_weighted=True)
 
-    # Part H: compare to linear regression for different # of training points
+    # Part G: compare to linear regression for different # of training points
     mean_errors_lin = []
     mean_errors_nn = []
     ratios = np.arange(0.1, 1.1, 0.1)
     for r in ratios:
         num_samples = int(r * len(train_features))
-        ##### TODO(h): Your Code Here #####
-        ...
+        ##### (g): Your Code Here #####
+        linreg = LinearRegression()
+        linreg.fit(train_features[:num_samples], train_labels[:num_samples])
+        linreg_pred = linreg.predict(test_features)
+        e_lin = np.mean(np.sqrt((69*(linreg_pred[:, 0] - test_labels[:, 0]))**2 + (52*(linreg_pred[:, 1] - test_labels[:, 1]))**2))
+        
+        e_nn = grid_search(train_features[:num_samples], train_labels[:num_samples], test_features, test_labels, is_weighted=True)
 
         mean_errors_lin.append(e_lin)
         mean_errors_nn.append(e_nn)

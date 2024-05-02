@@ -98,11 +98,11 @@ plt.xlabel('d')
 plt.ylabel('Train/Val Accuracy')
 plt.legend(['Train Accuracy', 'Validation Accuracy'])
 plt.savefig(fname='trval_accs.png', dpi=600, bbox_inches='tight')
-
+print('Best validation accuracy:', val_accs[2])
 
 # Part (f): Learn better user/movie vector representations by minimizing loss
 # begin solution
-best_d = ... # TODO(f): Use best from part (e)
+best_d = 10 # Use best from part (e)
 # end solution
 np.random.seed(20)
 user_vecs = np.random.random((R.shape[0], best_d))
@@ -113,7 +113,21 @@ user_rated_idxs, movie_rated_idxs = get_rated_idxs(np.copy(R))
 def update_user_vecs(user_vecs, movie_vecs, R, user_rated_idxs):
 
     # Update user_vecs to the loss-minimizing value
-    ##### TODO(f): Your Code Here #####
+    d = user_vecs.shape[1]
+    R_rows = R.shape[0]
+    lambda_reg = 0.1
+
+    for i in range(R_rows):
+        if len(user_rated_idxs[i]) == 0:
+            continue
+
+        y_rated = movie_vecs[user_rated_idxs[i]]
+        R_rated = R[i, user_rated_idxs[i]]
+
+        A = np.dot(y_rated.T, y_rated) + lambda_reg * np.eye(d) # adding regularization
+        b = np.dot(R_rated, y_rated)
+
+        user_vecs[i] = np.linalg.solve(A, b)
 
     return user_vecs
 
@@ -121,7 +135,21 @@ def update_user_vecs(user_vecs, movie_vecs, R, user_rated_idxs):
 def update_movie_vecs(user_vecs, movie_vecs, R, movie_rated_idxs):
 
     # Update movie_vecs to the loss-minimizing value
-    ##### TODO(f): Your Code Here #####
+    d = movie_vecs.shape[1]
+    R_cols = R.shape[1]
+    lambda_reg = 0.1
+
+    for j in range(R_cols):
+        if len(movie_rated_idxs[j]) == 0:
+            continue
+
+        x_rated = user_vecs[movie_rated_idxs[j]]
+        R_rated = R[movie_rated_idxs[j], j]
+
+        A = np.dot(x_rated.T, x_rated) + lambda_reg * np.eye(d)
+        b = np.dot(R_rated, x_rated)
+
+        movie_vecs[j] = np.linalg.solve(A, b)
 
     return movie_vecs
 
