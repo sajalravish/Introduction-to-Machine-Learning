@@ -289,7 +289,6 @@ class Conv2D(Layer):
         out_rows = (in_rows - kernel_height + 2 * self.pad[0]) // self.stride + 1
         out_cols = (in_cols - kernel_width + 2 * self.pad[1]) // self.stride + 1
 
-
         # padding
         X_padded = np.pad(X, ((0, 0), (self.pad[0], self.pad[0]), (self.pad[1], self.pad[1]), (0, 0)), mode='constant')
         Z = np.zeros((n_examples, out_rows, out_cols, out_channels))
@@ -354,7 +353,7 @@ class Conv2D(Layer):
 
         # compute gradients & perform a backward pass
         dLdZ = self.activation.backward(Z, dLdY)
-        dLdb = np.sum(dLdZ, axis=(0, 1, 2))
+        dLdb = np.sum(dLdZ, axis=(0, 1, 2)).reshape(1, -1)
         dLdW = np.zeros_like(W)
         dLdX = np.zeros_like(X_pad)
 
@@ -367,10 +366,9 @@ class Conv2D(Layer):
 
                 for channel in range(out_channels):
                     dLdZ_slice = dLdZ[:, d1:d1+1, d2:d2+1, np.newaxis, channel]
-                    dLdX_slice = dLdX[:, start_row:end_row, start_col:end_col, :]
                     W_slice = W[np.newaxis, :, :, :, channel] 
                     dLdX[:, start_row:end_row, start_col:end_col, :] += W_slice * dLdZ_slice
-                    dLdW[:, :, :, channel] += np.sum(dLdX_slice * dLdZ_slice, axis=0)
+                    dLdW[:, :, :, channel] += np.sum(X_pad[:, start_row:end_row, start_col:end_col, :] * dLdZ_slice, axis=0)
 
         self.gradients["W"] = dLdW
         self.gradients["b"] = dLdb
